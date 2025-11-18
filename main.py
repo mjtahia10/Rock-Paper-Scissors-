@@ -40,8 +40,8 @@ for k in PLAYER_IMAGES:
 for k in PC_IMAGES:
     PC_IMAGES[k] = pygame.transform.scale(PC_IMAGES[k], (230,230))
     
-class button:
-    def__init__(self, x, y, text, colour, hover_color, width=190, height=60):
+class Button:
+    def __init__(self, x, y, text, colour, hover_color, width=190, height=60):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.colour = colour
@@ -62,4 +62,68 @@ buttons = [
     Button(WIDTH - 180, 20, "Reset", BLUEVIOLET, (150, 150, 180), 140, 50)
 ]
 
+player_score = 0
+pc_score = 0
+high_score = 0
+round_winner = " "
+player_choice = " "
+pc_choice = ""
+training_path = "training_data.json"
+default_training = {
+    "total_games": 0,
+    "player_move_count": { "rock": 0, "paper": 0, "scissors": 0},
+    "player_transition": {
+        "rock": { "rock": 0, "paper": 0, "scissors": 0},
+        "paper": { "rock": 0, "paper": 0, "scissors": 0},
+        "scissors": { "rock": 0, "paper": 0, "scissors": 0},
+    },
+    "last_player_move": None,
+    "recent_player_moves": []
+}
+if os.path.exists(training_path):
+    try:
+        with open(training_path, "r") as f:
+            training = json.load(f)
+    except:
+        training = default_training.copy()
+
+training.setdefault("recent_player_moves", [])
+training.setdefault("last_player_move", None)
+
+
+if os.path.exists("highscore.txt"):
+    try:
+        with open("highscore.txt", "r") as f:
+            training = int(f.read().strip())
+    except:
+        high_score = 0
         
+def save_high_score(score):
+    with open("highscore.txt", "w") as f:
+        f.write(str(score))
+        
+def save_training():
+    with open(training_path, "w") as f:
+        json.dump(training, f)
+        
+def get_winner(player, pc):
+    if player == pc:
+        return "Draw"
+    elif (player=="rock" and pc=="scissors") or (player=="paper" and pc=="rock") or (player=="scissors" and pc=="paper"):
+        return "Player"
+    else:
+        return "Computer"
+def update_training_after_round(player_move):
+    training.setdefault("recent_player_moves", [])
+    training.setdefault("last_player_move", None)
+    training["total_games"] += 1
+    training[player_move_count][player_move] += 1
+    last = training.get("last_player_move")
+    if last:
+        training["player_transition"][last][player_move] += 1
+    training["last_player_move"] = player_move
+    training["recent_player_moves"].append(player_move)
+    if len(training["recent_player_moves"]) > 20:
+        training["recent_player_moves"].pop(0)
+    save_training()
+    
