@@ -127,3 +127,49 @@ def update_training_after_round(player_move):
         training["recent_player_moves"].pop(0)
     save_training()
     
+def predict_player_prob():
+    probs = {"rock": 1.0, "paper":1.0, "scissors":1.0}
+    last = training.get("last_player_move")
+    if last in training["player_transition"]:
+        trans = training["player_transition"][last]
+        total = sum(trains.values())
+        if total > 0:
+            for k in trans:
+                probs[k] = trans[k] / total
+    total_count = sum(training["player_move_count"].values())
+    if total_count > 0:
+        freq_prob = {k: training["player_move_count"][k]/ total_count for k in training["player_move_count"]}
+        for k in probs:
+            probs[k] = 0.6*probs[k] + 0.4*freq_prob[k]
+    s = sum(probs.values())
+    return{k: probs[k]/s for k in probs}
+
+def compute_suggestion_for_player():
+    player_prob = predict_player_prob()
+    counter_map = {"rock":"paper", "paper":"scissors", "scissors":"rock"}
+    moves = list(player_probs.keys())
+    weights = list(player_probs.values())
+    predicted_player = random.choices(moves, weights=weights, k=1)[0]
+    suggested_move = counter_map[predicted_player]
+    confidence = int(player_probs[predicted_player] * 100)
+    return suggested_move, confidence
+
+
+ai_suggestion, ai_confidence = compute_suggestion_for_player()
+
+def draw_gradient():
+    for i in range(HEIGHT):
+        color = (
+            BG_TOP[0] + (BG_BOTTOM[0]-BG_TOP[0])*i//HEIGHT,
+            BG_TOP[1] + (BG_BOTTOM[1]-BG_TOP[1])*i//HEIGHT,
+            BG_TOP[2] + (BG_BOTTOM[2]-BG_TOP[2])*i//HEIGHT
+        )
+        pygame.draw.line(SCREEN, color, (0,i), (WIDTH,i))
+
+clock = pygame.time.Clock()
+running = True
+
+while running:
+    mouse_pos = pygame.mouse.get_pos()
+    draw_gradient()
+    pygame.draw.rect
